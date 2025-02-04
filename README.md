@@ -51,6 +51,11 @@ PicLabs/
 │── images/           # Folder containing images
 │── README.md         # Project documentation
 
+## 🌍 Live Demo  
+
+🔗 [Check out PicLabs here!](https://dw33py.github.io/PicLabs/)
+
+
 
 ## 🔧 Enhancements (Future Improvements)
 - User Upload Feature - Allow users to submit and share their images.
