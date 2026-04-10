@@ -2,80 +2,892 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PicsLab - Discover Creativity</title>
-    <link rel="stylesheet" href="styles.css">
-    <script defer src="scripts.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>PicsLab — Cinematic Creative Studio | Awwwards Experience</title>
+    <!-- Google Fonts + GSAP + Lenis Smooth Scroll -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css"/>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@studio-freight/lenis@1.0.42/dist/lenis.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #0a0a0f;
+            font-family: 'Inter', sans-serif;
+            color: #ededf0;
+            overflow-x: hidden;
+            cursor: default;
+        }
+
+        /* ---------- PRELOADER ---------- */
+        .preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #05050a;
+            z-index: 100000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            gap: 2rem;
+            transition: opacity 1s ease, visibility 0.5s;
+        }
+        .preloader.hidden {
+            opacity: 0;
+            visibility: hidden;
+        }
+        .loader-text {
+            font-family: 'Syne', monospace;
+            font-size: 1.5rem;
+            letter-spacing: 0.3rem;
+            background: linear-gradient(135deg, #fff, #ff66cc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .loader-progress {
+            width: 200px;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .loader-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #ff66cc, #aa66ff);
+            transition: width 0.2s ease;
+        }
+        .loader-percent {
+            font-size: 0.9rem;
+            color: #aaa;
+        }
+
+        /* custom cursor + glow trail */
+        .cursor-glow {
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, rgba(255,80,200,0.8), rgba(100,80,255,0) 70%);
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 9999;
+            mix-blend-mode: screen;
+            transition: width 0.2s, height 0.2s, filter 0.2s;
+            transform: translate(-50%, -50%);
+        }
+        .cursor-dot {
+            width: 8px;
+            height: 8px;
+            background: #ff66cc;
+            border-radius: 50%;
+            position: fixed;
+            pointer-events: none;
+            z-index: 10000;
+            filter: blur(1px);
+            transition: transform 0.05s linear;
+        }
+        .cursor-glow.hover-gallery {
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, rgba(255,200,100,0.9), rgba(255,80,200,0) 70%);
+            filter: blur(4px);
+        }
+        .cursor-glow.hover-clickable {
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, #ff66cc, #ff44aa00);
+            mix-blend-mode: difference;
+        }
+
+        /* grain overlay */
+        .grain::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='1' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.045'/%3E%3C/svg%3E");
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0.4;
+            mix-blend-mode: overlay;
+        }
+
+        /* glassmorphic navbar */
+        .navbar {
+            position: fixed;
+            top: 20px;
+            left: 5%;
+            right: 5%;
+            width: 90%;
+            margin: 0 auto;
+            padding: 0.8rem 2rem;
+            background: rgba(15, 15, 25, 0.6);
+            backdrop-filter: blur(16px);
+            border-radius: 80px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+        }
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-weight: 800;
+            font-size: 1.6rem;
+            background: linear-gradient(135deg, #f0f, #6a5acd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+        }
+        .nav-links a {
+            color: #f0f0ff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: 0.2s;
+            font-size: 0.95rem;
+        }
+        .nav-links a:hover, .active-link { color: #ff66cc; text-shadow:0 0 6px #ff66cc; }
+        .burger {
+            display: none;
+            font-size: 1.8rem;
+            cursor: pointer;
+            color: white;
+        }
+        @media (max-width: 860px) {
+            .nav-links { display: none; }
+            .burger { display: block; }
+            .navbar { padding: 0.7rem 1.5rem; width: 92%; }
+        }
+        /* fullscreen mobile menu */
+        .menu-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(8, 8, 18, 0.98);
+            backdrop-filter: blur(20px);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            transform: translateX(100%);
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .menu-overlay.active { transform: translateX(0); }
+        .menu-overlay a {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            text-decoration: none;
+            font-family: 'Syne';
+        }
+        .close-menu {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            font-size: 2.5rem;
+            cursor: pointer;
+        }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            padding: 2rem;
+        }
+        .parallax-bg {
+            position: absolute;
+            width: 120%;
+            height: 120%;
+            top: -10%;
+            left: -10%;
+            background: url('https://picsum.photos/id/104/1920/1080') center/cover no-repeat;
+            filter: brightness(0.4) contrast(1.2);
+            z-index: -2;
+            transform: scale(1.1);
+        }
+        .hero-content {
+            text-align: center;
+            z-index: 2;
+        }
+        .hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.8rem, 10vw, 6rem);
+            font-weight: 800;
+            background: linear-gradient(135deg, #fff, #c084fc, #f0f);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+        .floating-elem {
+            position: absolute;
+            width: 100px;
+            border-radius: 24px;
+            filter: drop-shadow(0 20px 30px rgba(0,0,0,0.6));
+        }
+        .cta-btn {
+            margin-top: 2rem;
+            display: inline-block;
+            padding: 0.9rem 2.2rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,102,204,0.6);
+            border-radius: 60px;
+            font-weight: 700;
+            color: white;
+            backdrop-filter: blur(8px);
+            transition: 0.3s;
+            text-decoration: none;
+        }
+        .cta-btn:hover {
+            transform: scale(1.05);
+            background: #ff44aa20;
+            box-shadow: 0 0 20px #ff44cc;
+        }
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            width: 30px;
+            height: 50px;
+            border: 2px solid rgba(255,255,255,0.5);
+            border-radius: 30px;
+            transform: translateX(-50%);
+        }
+        .scroll-indicator::before {
+            content: '';
+            position: absolute;
+            width: 4px;
+            height: 12px;
+            background: white;
+            left: 50%;
+            top: 8px;
+            transform: translateX(-50%);
+            border-radius: 4px;
+            animation: scrollAnim 2s infinite;
+        }
+        @keyframes scrollAnim { 0% { opacity:1; top:8px; } 80%{ opacity:0; top:28px; } 100%{ opacity:0; } }
+
+        section { padding: 5rem 5%; position: relative; }
+        .section-title {
+            font-size: clamp(2rem, 6vw, 3rem);
+            font-family: 'Syne';
+            margin-bottom: 2.5rem;
+            background: linear-gradient(120deg, #fff, #b388ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* stats counter section (new) */
+        .stats-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+            gap: 2rem;
+            margin-top: 2rem;
+        }
+        .stat-card {
+            background: rgba(20,20,35,0.4);
+            backdrop-filter: blur(12px);
+            padding: 2rem;
+            border-radius: 32px;
+            text-align: center;
+            flex: 1;
+            min-width: 150px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            font-family: 'Syne';
+            background: linear-gradient(135deg, #ff66cc, #aa66ff);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        /* gallery masonry */
+        .gallery-filters {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+            justify-content: center;
+        }
+        .filter-btn {
+            background: rgba(255,255,255,0.05);
+            border: none;
+            padding: 0.5rem 1.4rem;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: 0.2s;
+            font-size: 0.9rem;
+        }
+        .filter-btn.active, .filter-btn:hover {
+            background: #ff66cc;
+            color: #0a0a0f;
+            box-shadow: 0 0 12px #ff66cc;
+        }
+        .masonry-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 1.5rem;
+            grid-auto-rows: 10px;
+            cursor: grab;
+            user-select: none;
+        }
+        .masonry-grid:active { cursor: grabbing; }
+        .grid-item {
+            position: relative;
+            overflow: hidden;
+            border-radius: 28px;
+            transition: transform 0.4s cubic-bezier(0.2, 0.9, 0.4, 1.1), box-shadow 0.3s;
+            cursor: pointer;
+        }
+        .grid-item:hover {
+            transform: scale(1.02) translateY(-8px);
+            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.8);
+            z-index: 10;
+        }
+        .grid-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            transition: transform 0.6s ease;
+        }
+        .grid-item:hover img { transform: scale(1.08); }
+        .overlay-icons {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 1rem;
+            display: flex;
+            gap: 1rem;
+            opacity: 0;
+            transition: 0.3s;
+            justify-content: flex-end;
+        }
+        .grid-item:hover .overlay-icons { opacity: 1; }
+        .overlay-icons span {
+            background: rgba(0,0,0,0.6);
+            padding: 8px;
+            border-radius: 50%;
+            backdrop-filter: blur(4px);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        /* horizontal scroll */
+        .horizontal-scroll-section {
+            margin: 3rem 0;
+            overflow-x: auto;
+            white-space: nowrap;
+            scroll-snap-type: x mandatory;
+            padding: 1.5rem 0;
+            display: flex;
+            gap: 1.5rem;
+            scrollbar-width: thin;
+        }
+        .horiz-card {
+            display: inline-flex;
+            width: 70vw;
+            max-width: 500px;
+            background: rgba(20,20,35,0.6);
+            backdrop-filter: blur(12px);
+            border-radius: 40px;
+            scroll-snap-align: start;
+            padding: 1.8rem;
+            white-space: normal;
+            vertical-align: top;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s;
+        }
+        .diagonal-transition {
+            background: linear-gradient(145deg, #0f0f1a, #13132b);
+            clip-path: polygon(0 6%, 100% 0, 100% 94%, 0 100%);
+            margin: -1rem 0;
+            padding: 6rem 5%;
+        }
+
+        /* contact */
+        .contact-card {
+            background: rgba(20,20,35,0.5);
+            backdrop-filter: blur(16px);
+            border-radius: 48px;
+            padding: 2rem;
+            max-width: 700px;
+            margin: 0 auto;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+        .input-group input, .input-group textarea {
+            width: 100%;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid #444;
+            border-radius: 28px;
+            padding: 1rem 1.5rem;
+            color: white;
+            font-size: 1rem;
+            outline: none;
+        }
+        .input-group label {
+            position: absolute;
+            left: 1.5rem;
+            top: 1rem;
+            color: #aaa;
+            transition: 0.2s;
+            pointer-events: none;
+        }
+        .input-group input:focus ~ label,
+        .input-group input:not(:placeholder-shown) ~ label,
+        .input-group textarea:focus ~ label,
+        .input-group textarea:not(:placeholder-shown) ~ label {
+            top: -10px;
+            left: 1rem;
+            font-size: 0.7rem;
+            background: #0a0a0f;
+            padding: 0 6px;
+            color: #ff66cc;
+        }
+        button.submit-btn {
+            background: linear-gradient(95deg, #ff44aa, #aa66ff);
+            border: none;
+            padding: 0.9rem;
+            border-radius: 40px;
+            font-weight: bold;
+            width: 100%;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+        .social-icons a {
+            color: white;
+            font-size: 1.6rem;
+            margin: 0 0.6rem;
+            transition: 0.2s;
+            display: inline-block;
+        }
+        .social-icons a:hover { transform: translateY(-5px); color: #ff66cc; }
+        .skeleton {
+            background: linear-gradient(90deg, #20202a 25%, #2e2e3a 50%, #20202a 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 24px;
+        }
+        @keyframes loading { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        .back-to-top {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #ff44aa;
+            border-radius: 50%;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0;
+            transition: 0.3s;
+            z-index: 99;
+        }
+        .heart-particle {
+            position: fixed;
+            pointer-events: none;
+            font-size: 1rem;
+            animation: floatUp 0.8s ease-out forwards;
+            z-index: 10000;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translate(0,0) scale(1); }
+            100% { opacity: 0; transform: translate(var(--tx,20px),-80px) scale(0); }
+        }
+        @media (max-width: 640px) {
+            section { padding: 3rem 5%; }
+            .section-title { margin-bottom: 1.5rem; }
+            .horiz-card { width: 85vw; padding: 1.2rem; }
+            .stat-card { padding: 1rem; }
+            .stat-number { font-size: 2rem; }
+            .navbar { top: 10px; }
+        }
+    </style>
 </head>
 <body>
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <img src="logo.png" alt="PicsLab Logo" class="logo-pic">
-            </div>
-            <ul class="nav-list">
-                <li><a href="#home"><i class="fas fa-home"></i> Home</a></li>
-                <li><a href="#about"><i class="fas fa-info-circle"></i> About</a></li>
-                <li><a href="#gallery"><i class="fas fa-images"></i> Gallery</a></li>
-                <li><a href="#contact"><i class="fas fa-envelope"></i> Contact</a></li>
-            </ul>
-        </nav>
-    </header>
 
-    <main id="home">
-        <section class="hero">
-            <h1>Welcome to PicsLab</h1>
-            <p>Unleash your creativity with stunning visuals</p>
-            <button class="cta-button">Explore Now</button>
-        </section>
-    </main>
+<!-- PRELOADER -->
+<div class="preloader" id="preloader">
+    <div class="loader-text">PicsLab</div>
+    <div class="loader-progress"><div class="loader-fill" id="loaderFill"></div></div>
+    <div class="loader-percent" id="loaderPercent">0%</div>
+</div>
 
-    <section id="about" class="about-section">
-        <h2><i class="fas fa-user"></i> About Us</h2>
-        <p>PicsLab is a creative hub for photographers and visual artists. Showcase your art, discover inspiration, and connect with a global community of creatives.</p>
-        <img src="images/pexels-rachel-claire-7276577.jpg" alt="About Us Image" class="responsive-img">
-    </section>
+<div class="cursor-glow"></div>
+<div class="cursor-dot"></div>
+<div class="grain"></div>
 
-    <section id="gallery" class="gallery-section">
-        <h2><i class="fas fa-images"></i> Gallery</h2>
-        <div class="carousel">
-            <button class="carousel_button prev"><i class="fas fa-chevron-left"></i></button>
-            <div class="carousel_track">
-                <img src="images/pexels-zhuhehuai-544917.jpg" alt="Gallery Image 1" class="carousel_image">
-                <img src="images/pexels-adrien-olichon-1257089-2387793.jpg" alt="Gallery Image 2" class="carousel_image">
-                <img src="images/pexels-rachel-claire-7276577.jpg" alt="Gallery Image 3" class="carousel_image">
-            </div>
-            <button class="carousel_button next"><i class="fas fa-chevron-right"></i></button>
-        </div>
-    </section>
+<div class="navbar">
+    <div class="logo">PicsLab</div>
+    <div class="nav-links">
+        <a href="#hero">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#contact">Contact</a>
+    </div>
+    <div class="burger">☰</div>
+</div>
+<div class="menu-overlay" id="mobileMenu">
+    <div class="close-menu">✕</div>
+    <a href="#hero">Home</a><a href="#about">About</a><a href="#gallery">Gallery</a><a href="#contact">Contact</a>
+</div>
 
-    <section id="contact" class="contact-section">
-        <h2><i class="fas fa-envelope"></i> Contact Us</h2>
-        <form id="contact-form">
-            <label for="name">Name:</label>
-            <input type="text" id="name" name="name" required>
+<section id="hero" class="hero">
+    <div class="parallax-bg"></div>
+    <div class="hero-content">
+        <h1 class="hero-title">PicsLab<br>Visual Alchemy</h1>
+        <a href="#gallery" class="cta-btn magnetic-btn">Explore Gallery →</a>
+    </div>
+    <div class="scroll-indicator"></div>
+    <img src="https://picsum.photos/id/20/300/200" class="floating-elem" style="top:15%; left:5%; width:90px;" data-speed="0.8">
+    <img src="https://picsum.photos/id/22/300/200" class="floating-elem" style="bottom:10%; right:3%; width:110px;" data-speed="1.2">
+</section>
 
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+<section id="about" class="about">
+    <div class="section-title">Where pixels dream</div>
+    <div style="display: flex; flex-wrap: wrap; gap: 2rem; align-items:center;">
+        <div style="flex:1; font-size:1.1rem; line-height:1.6;">We are PicsLab — an experimental studio blending generative art, luxury imagery, and cutting-edge motion. Each frame tells a story. <br><br> <span style="color:#ff88dd;">✦ Asymmetrical narratives ✦</span></div>
+        <div style="flex:1; background: radial-gradient(circle at 30% 20%, #ff66cc20, #4433aa20); border-radius: 40px; padding: 1.8rem; backdrop-filter:blur(12px);">“Creativity without borders” — Since 2024</div>
+    </div>
+    <!-- new stats section -->
+    <div class="stats-container">
+        <div class="stat-card"><div class="stat-number" data-target="128">0</div><p>Projects</p></div>
+        <div class="stat-card"><div class="stat-number" data-target="45">0</div><p>Artists</p></div>
+        <div class="stat-card"><div class="stat-number" data-target="1.2M">0</div><p>Impressions</p></div>
+    </div>
+</section>
 
-            <label for="message">Message:</label>
-            <textarea id="message" name="message" rows="5" required></textarea>
+<div class="diagonal-transition">
+    <div class="section-title" style="text-align:center;">Story scroll: horizontal drift</div>
+    <div class="horizontal-scroll-section" id="horizScroll">
+        <div class="horiz-card"><h2>01 / Immersion</h2><p>Glitch & grain, neon flux — each image is kinetic poetry.</p></div>
+        <div class="horiz-card"><h2>02 / AI + Human</h2><p>Curated datasets meet emotional intelligence. Explore the unseen.</p></div>
+        <div class="horiz-card"><h2>03 / Infinite canvas</h2><p>Horizontal scrolling as narrative device. The future of layout.</p></div>
+        <div class="horiz-card"><h2>04 / Motion Soul</h2><p>Scroll-triggered metamorphosis, where code becomes art.</p></div>
+    </div>
+</div>
 
-            <button type="submit">Send</button>
+<section id="gallery" class="gallery">
+    <div class="section-title">The Archive</div>
+    <div class="gallery-filters" id="filterContainer">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="nature">Nature</button>
+        <button class="filter-btn" data-filter="tech">Tech</button>
+        <button class="filter-btn" data-filter="people">People</button>
+        <button class="filter-btn" data-filter="abstract">Abstract</button>
+    </div>
+    <div class="masonry-grid" id="masonryGrid"></div>
+    <div style="text-align:center; margin-top:2rem;"><button id="loadMoreBtn" class="cta-btn" style="padding:0.6rem 1.5rem;">Load More</button></div>
+</section>
+
+<section id="contact" class="contact">
+    <div class="contact-card">
+        <h2 style="margin-bottom:1.5rem;">Let's collide ideas</h2>
+        <form id="contactForm">
+            <div class="input-group"><input type="text" placeholder=" " id="name"><label>Full name</label></div>
+            <div class="input-group"><input type="email" placeholder=" " id="email"><label>Email address</label></div>
+            <div class="input-group"><textarea rows="3" placeholder=" " id="msg"></textarea><label>Your vision</label></div>
+            <button class="submit-btn" type="submit">Send →</button>
+            <div id="formFeedback" style="margin-top:1rem; text-align:center;"></div>
         </form>
-    </section>
+    </div>
+</section>
 
-    <button id="backToTop"><i class="fas fa-arrow-up"></i></button>
+<footer>
+    <div class="social-icons">
+        <a href="#">📷</a><a href="#">🐦</a><a href="#">📘</a><a href="#">🎨</a>
+    </div>
+    <div style="margin: 1rem 0;">Made by <a href="https://dw33py.netlify.app" target="_blank" style="color:#ff88dd;">Dw33pY</a> → creative coding</div>
+    <div>© PicsLab — experimental imagery</div>
+</footer>
+<div class="back-to-top" id="backToTop">↑</div>
 
-    <footer>
-        <p>&copy; 2025 PicsLab | All Rights Reserved</p>
-        <div class="social-icons">
-            <a href="#" class="fab fa-facebook"></a>
-            <a href="#" class="fab fa-twitter"></a>
-            <a href="#" class="fab fa-instagram"></a>
-        </div>
-    </footer>
+<script src="https://cdn.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js"></script>
+<script>
+    // ---------- EXPANDED IMAGE DATASET (more content) ----------
+    const imagePool = [
+        {src:'https://picsum.photos/id/1015/400/500', category:'nature', title:'Mountain lake'},
+        {src:'https://picsum.photos/id/104/400/500', category:'nature', title:'Forest path'},
+        {src:'https://picsum.photos/id/0/400/600', category:'tech', title:'Laptop coding'},
+        {src:'https://picsum.photos/id/106/400/500', category:'people', title:'Floral portrait'},
+        {src:'https://picsum.photos/id/119/400/600', category:'nature', title:'Mountain view'},
+        {src:'https://picsum.photos/id/26/400/500', category:'people', title:'Venice walk'},
+        {src:'https://picsum.photos/id/96/400/500', category:'tech', title:'Camera lens'},
+        {src:'https://picsum.photos/id/169/400/600', category:'nature', title:'Sunset desert'},
+        {src:'https://picsum.photos/id/155/400/500', category:'people', title:'Urban fashion'},
+        {src:'https://picsum.photos/id/0/400/400', category:'tech', title:'Modern workspace'},
+        {src:'https://picsum.photos/id/20/400/550', category:'nature', title:'Coffee & notebook'},
+        {src:'https://picsum.photos/id/29/400/600', category:'people', title:'Creative portrait'},
+        {src:'https://picsum.photos/id/15/400/450', category:'abstract', title:'Neon waves'},
+        {src:'https://picsum.photos/id/18/400/520', category:'abstract', title:'Liquid geometry'},
+        {src:'https://picsum.photos/id/42/400/580', category:'tech', title:'Circuit dream'},
+        {src:'https://picsum.photos/id/77/400/490', category:'nature', title:'River mist'},
+        {src:'https://picsum.photos/id/88/400/620', category:'people', title:'Street dance'},
+        {src:'https://picsum.photos/id/91/400/530', category:'abstract', title:'Chromatic blur'}
+    ];
+    let currentCategory = 'all';
+    let visibleCount = 12;
+    let allItems = [...imagePool];
+
+    function renderGallery() {
+        let filtered = currentCategory === 'all' ? allItems : allItems.filter(i => i.category === currentCategory);
+        let displayItems = filtered.slice(0, visibleCount);
+        const grid = document.getElementById('masonryGrid');
+        if(!grid) return;
+        grid.innerHTML = '';
+        displayItems.forEach((item) => {
+            const col = document.createElement('div');
+            col.className = 'grid-item';
+            const img = document.createElement('img');
+            img.loading = 'lazy';
+            img.src = item.src;
+            img.alt = item.title;
+            const overlayDiv = document.createElement('div');
+            overlayDiv.className = 'overlay-icons';
+            overlayDiv.innerHTML = `<span>❤️</span><span>⬇️</span><span>🔍</span>`;
+            col.appendChild(img);
+            col.appendChild(overlayDiv);
+            col.addEventListener('click', (e) => {
+                if(e.target.tagName!=='SPAN') Fancybox.show([{src: item.src, type:'image'}]);
+                else e.stopPropagation();
+            });
+            grid.appendChild(col);
+        });
+        setTimeout(() => {
+            document.querySelectorAll('.grid-item').forEach(el => {
+                let rand = Math.floor(Math.random() * 40) + 160;
+                el.style.gridRowEnd = `span ${Math.ceil(rand / 20)}`;
+            });
+        }, 20);
+        // handle no results
+        let noResult = document.getElementById('noResultMsg');
+        if(displayItems.length === 0 && !document.querySelector('.skeleton')) {
+            if(!noResult) {
+                const msg = document.createElement('div');
+                msg.id = 'noResultMsg';
+                msg.style.textAlign = 'center';
+                msg.style.padding = '3rem';
+                msg.innerHTML = '✨ No photons match this vibe. ✨<br><span style="font-size:0.9rem;">Try another filter →</span>';
+                grid.after(msg);
+            }
+        } else if(noResult) noResult.remove();
+    }
+
+    function loadMore() { visibleCount += 6; renderGallery(); }
+    document.getElementById('loadMoreBtn')?.addEventListener('click', loadMore);
+    
+    // filters
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function(){
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentCategory = this.getAttribute('data-filter');
+            visibleCount = 12;
+            renderGallery();
+        });
+    });
+
+    // Preloader simulation
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.floor(Math.random() * 15) + 5;
+        if(progress >= 100) progress = 100;
+        document.getElementById('loaderFill').style.width = progress + '%';
+        document.getElementById('loaderPercent').innerText = progress + '%';
+        if(progress === 100) {
+            clearInterval(interval);
+            setTimeout(() => {
+                document.getElementById('preloader').classList.add('hidden');
+                document.body.style.overflow = 'auto';
+                // init animations after preloader
+                initAnimations();
+            }, 400);
+        }
+    }, 80);
+
+    function initAnimations() {
+        const lenis = new Lenis({ lerp: 0.08, smoothWheel: true });
+        function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
+        requestAnimationFrame(raf);
+        gsap.registerPlugin(ScrollTrigger);
+        
+        gsap.to(".parallax-bg", { y: "15%", scale: 1.2, ease: "none", scrollTrigger: { trigger: ".hero", start: "top top", end: "bottom top", scrub: 1 } });
+        gsap.utils.toArray(".floating-elem").forEach(el => { gsap.to(el, { y: "40px", duration: 3, repeat: -1, yoyo: true }); });
+        gsap.from(".hero h1", { opacity: 0, y: 80, duration: 1.2, ease: "back.out" });
+        gsap.from(".cta-btn", { opacity: 0, scale: 0.8, delay: 0.5, duration: 0.8 });
+        gsap.utils.toArray("section, .diagonal-transition, .contact-card").forEach(section => {
+            gsap.from(section, { opacity: 0, y: 60, duration: 0.9, scrollTrigger: { trigger: section, start: "top 85%", toggleActions: "play none none reverse" } });
+        });
+        // stat counter animation
+        const statNumbers = document.querySelectorAll('.stat-number');
+        statNumbers.forEach(el => {
+            const target = el.getAttribute('data-target');
+            let value = 0;
+            const updateCounter = () => {
+                if(value < target) { value += Math.ceil(target / 50); el.innerText = value; requestAnimationFrame(updateCounter); }
+                else el.innerText = target;
+            };
+            ScrollTrigger.create({ trigger: el, start: "top 90%", onEnter: () => updateCounter(), once: true });
+        });
+        
+        // magnetic buttons
+        document.querySelectorAll(".magnetic-btn").forEach(btn => {
+            btn.addEventListener("mousemove", (e) => {
+                const rect = btn.getBoundingClientRect();
+                const x = e.clientX - rect.left - rect.width/2;
+                const y = e.clientY - rect.top - rect.height/2;
+                gsap.to(btn, { x: x*0.3, y: y*0.3, duration: 0.3 });
+            });
+            btn.addEventListener("mouseleave", () => gsap.to(btn, { x: 0, y: 0, duration: 0.4 }));
+        });
+    }
+
+    // gallery render after preloader but also initial skeleton
+    window.addEventListener('DOMContentLoaded', () => {
+        const grid = document.getElementById('masonryGrid');
+        if(grid) grid.innerHTML = '<div class="skeleton" style="height:280px;"></div>'.repeat(6);
+        setTimeout(() => { if(typeof renderGallery === 'function') renderGallery(); }, 500);
+        Fancybox.bind("[data-fancybox]");
+    });
+
+    // Back to top
+    const backBtn = document.getElementById('backToTop');
+    window.addEventListener('scroll', () => backBtn.style.opacity = window.scrollY > 500 ? '1' : '0');
+    backBtn.addEventListener('click', () => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+
+    // burger menu
+    const burger = document.querySelector('.burger');
+    const menuOverlay = document.getElementById('mobileMenu');
+    const closeMenu = document.querySelector('.close-menu');
+    burger?.addEventListener('click', () => menuOverlay.classList.add('active'));
+    closeMenu?.addEventListener('click', () => menuOverlay.classList.remove('active'));
+    document.querySelectorAll('.menu-overlay a').forEach(link => link.addEventListener('click', () => menuOverlay.classList.remove('active')));
+
+    // active link highlight
+    const sections = document.querySelectorAll("section");
+    window.addEventListener("scroll", () => {
+        let current = "";
+        sections.forEach(sec => { if(window.scrollY >= sec.offsetTop - 200) current = sec.getAttribute("id"); });
+        document.querySelectorAll(".nav-links a, .menu-overlay a").forEach(link => {
+            link.classList.remove("active-link");
+            if(link.getAttribute("href") === `#${current}`) link.classList.add("active-link");
+        });
+    });
+
+    // contact form success
+    document.getElementById('contactForm')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const feedback = document.getElementById('formFeedback');
+        feedback.innerHTML = "✨ Message sent! We'll reach out soon. ✨";
+        feedback.style.color = "#ff88dd";
+        setTimeout(() => feedback.innerHTML = "", 3000);
+        e.target.reset();
+    });
+
+    // custom cursor & interactions
+    const cursorGlow = document.querySelector('.cursor-glow');
+    const cursorDot = document.querySelector('.cursor-dot');
+    document.addEventListener('mousemove', (e) => {
+        gsap.to(cursorGlow, { x: e.clientX, y: e.clientY, duration: 0.2 });
+        gsap.to(cursorDot, { x: e.clientX, y: e.clientY, duration: 0.05 });
+    });
+    document.querySelectorAll('.grid-item, .filter-btn, .cta-btn, .submit-btn, .social-icons a, .nav-links a').forEach(el => {
+        el.addEventListener('mouseenter', () => {
+            if(el.classList.contains('grid-item')) cursorGlow.classList.add('hover-gallery');
+            else cursorGlow.classList.add('hover-clickable');
+        });
+        el.addEventListener('mouseleave', () => cursorGlow.classList.remove('hover-gallery', 'hover-clickable'));
+    });
+
+    // heart explosion
+    function createHeartExplosion(x,y) {
+        for(let i=0;i<12;i++) {
+            const p = document.createElement('div');
+            p.className = 'heart-particle';
+            p.innerHTML = ['❤️','✨','💜','🌟','🎨'][Math.floor(Math.random()*5)];
+            p.style.left = `${x + (Math.random()-0.5)*30}px`;
+            p.style.top = `${y + (Math.random()-0.5)*30}px`;
+            p.style.setProperty('--tx', `${(Math.random()-0.5)*100}px`);
+            document.body.appendChild(p);
+            setTimeout(() => p.remove(), 800);
+        }
+    }
+    document.getElementById('masonryGrid')?.addEventListener('click', (e) => {
+        const heartSpan = e.target.closest('.overlay-icons span:first-child');
+        if(heartSpan) {
+            e.stopPropagation();
+            const rect = heartSpan.getBoundingClientRect();
+            createHeartExplosion(rect.left+rect.width/2, rect.top+rect.height/2);
+            heartSpan.style.transform = 'scale(1.3)';
+            setTimeout(() => heartSpan.style.transform = '', 200);
+        }
+    });
+
+    // dynamic gradient background
+    window.addEventListener('scroll', () => {
+        const scrollPercent = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+        const hue = 260 + (scrollPercent * 60);
+        const sat = 70 + (scrollPercent * 20);
+        document.body.style.background = `radial-gradient(circle at 50% 30%, hsl(${hue}, ${sat}%, 12%), #05050a 90%)`;
+    });
+
+    // drag to scroll gallery (desktop)
+    const galleryGrid = document.getElementById('masonryGrid');
+    let isDown = false, startX, scrollLeft;
+    if(galleryGrid && window.innerWidth > 768) {
+        galleryGrid.addEventListener('mousedown', (e) => { isDown = true; galleryGrid.style.cursor = 'grabbing'; startX = e.pageX - galleryGrid.offsetLeft; scrollLeft = galleryGrid.scrollLeft; });
+        window.addEventListener('mouseup', () => { isDown = false; galleryGrid.style.cursor = 'grab'; });
+        galleryGrid.addEventListener('mousemove', (e) => { if(!isDown) return; e.preventDefault(); const x = e.pageX - galleryGrid.offsetLeft; const walk = (x - startX) * 1.5; galleryGrid.scrollLeft = scrollLeft - walk; });
+    }
+    // tilt effect
+    document.querySelectorAll('.grid-item, .horiz-card').forEach(card => {
+        card.addEventListener('mousemove', (e) => {
+            const rect = card.getBoundingClientRect();
+            const x = (e.clientX - rect.left)/rect.width - 0.5;
+            const y = (e.clientY - rect.top)/rect.height - 0.5;
+            gsap.to(card, { rotateY: x*8, rotateX: y*-8, duration: 0.4, transformPerspective: 800 });
+        });
+        card.addEventListener('mouseleave', () => gsap.to(card, { rotateY: 0, rotateX: 0, duration: 0.5 }));
+    });
+</script>
 </body>
 </html>
